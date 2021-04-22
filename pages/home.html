@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+	<title>omegasuite.org</title>
+	<meta charset="utf-8">
+
+	<meta name="referrer" content="no-referrer">
+	<meta name="Access-Control-Allow-Headers" content="Content-Type, Accept, Authorization">
+	<meta name="Access-Control-Allow-Origin" content="*">
+
+    <link href="../css/style.css" rel="stylesheet">
+	<script src="../js/jquery-1.10.2.min.js"></script>
+	<script src="../js/crypto.js"></script>
+	<script src="../js/status.js"></script>
+</head>
+<body>
+	<div id="main">
+		<div id="culturemenu">
+            <!-- div class="culturemenurow">
+                <span><a href="?culture=en" id="cultureen" class="selected" onclick="ninja.translator.translate('en'); return false;">English</a></span> |
+                <span><a href="?culture=zh-cn" id="culturezh-cn" onclick="ninja.translator.translate('zh-cn'); return false;">简体中文</a></span> |
+            </div -->
+		</div>
+		<div id="tagline"><img src=./logo.png width=128></div>
+		<div>欢迎使用&Omega;钱包，基于&Omega;链的挖矿和资产管理软件。<br>
+		<p style="text-align:left;">
+		首次使用需要设置钱包密码，请记下您的钱包密码并妥善保存。<br>
+		</p>
+		<h2>地址</h2>
+		<p style="text-align:left;">
+		区块链以地址和私钥方式管理资产。地址和私钥一一对应，地址可以向他人公开，接收资产转入。私钥自行保管，用于签署资产转出。您可以创建新的地址私钥对（菜单中选：地址=》新建），也可以将您已有的私钥导入。有需要时，您也可以从钱包中导出私钥。<br>
+		</p>
+		<h2>挖矿</h2>
+		<p style="text-align:left;">
+		开始挖矿之前，您需要先设置至少一个地址并同步区块链数据。同步需要比较长的时间。从地址菜单中选择一个用于挖矿地址的，从挖矿菜单中启动挖矿即可。挖出的矿，只有延续最新区块链的才能得到全网的承认，因此在网络同步之前，建议停止挖矿。底部状态栏显示有同步进度。达到99.99%即可认为同步。除了设置地址外，挖矿还需要提供&Omega;币质押（没有的可以去社区网站领免费币）。从菜单中选“设置=》质押=》添加”，输入属于该挖矿地址的UTXO。可以设置多个以提高挖矿机会。可以从“资产=》明细”中查询属于您的UTXO。
+		</p>
+		<h2>交易</h2>
+		<p style="text-align:left;">
+		如果您只是转款（&omega;币）给他人，可以使用便捷支付，只需要提供接收人地址和金额就可以完成转款。<br>
+		复杂的交易可以使用构建交易输入、输入、导入他人所构建的交易、导出交易给他人继续构建的方式来进行。交易构建完成后您可以签署交易、将所签署的交易发送给他人继续签署、签署他人发送来的交易，所有各方都签署完成后，您可以提交交易。交易提交后才会被网络处理、记录。
+		</p>
+		<h2>设置</h2>
+		<p style="text-align:left;">
+		您可以更改钱包密码，并设置密码锁定时间。自上次密码输入后，在锁定时间之内无需再次为需要输入钱包密码的操作输入密码。
+		</p>
+		<h2>社区</h2>
+		<p style="text-align:left;">
+		更多的信息可以浏览&omega;社区，有免费币可领哦。<br>区块链的价值通过广泛使用来体现，用的人越多，价值就越高。欢迎扩散本软件给他人使用。
+		</p>
+		<h2>问题报告</h2>
+		<p style="text-align:left;">
+		如发现本软件有任何问题，请发送邮件至：haohxu@yahoo.com 或在兴趣群中提出。<br><small>* 本软件是免费软件，开发者对使用本软件所产生的任何后果不承担任何责任。</small>
+		</p>
+		</div>
+		<div id="test">
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		var iv;
+
+		function readyness() {
+			var d = '{"jsonrpc":"1.0","method":"getblockchaininfo","params":[],"id":' + id.toString() + '}';
+			id++;
+
+			var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+			$.ajax({
+				url:'http://127.0.0.1:8832',
+				type: "POST",	// different version of jquery has different name for this field
+				data:d,
+				global: true,
+				beforeSend: function(xhr) { 
+					xhr.setRequestHeader("Authorization", "Basic " + auth);
+				},
+				dataType:"json",
+				success: function (resp) {
+					clearInterval(iv);
+					window.chrome.webview.postMessage("ServerReady");
+				},
+			});
+		}
+
+		window.chrome.webview.addEventListener('message', arg => {
+			if ("Passwd" in arg.data) {
+				serverpass = arg.data.Passwd;
+				iv = setInterval("readyness()", 2000);
+			}
+		});
+		
+		window.chrome.webview.postMessage("Ready");
+
+	</script>
+
+</body>
+</html>

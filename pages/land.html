@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+	<title>omegasuite.org</title>
+	<meta charset="utf-8">
+
+	<meta name="referrer" content="no-referrer">
+	<meta name="Access-Control-Allow-Headers" content="Content-Type, Accept, Authorization">
+	<meta name="Access-Control-Allow-Origin" content="*">
+
+	<script src="../js/jquery-1.10.2.min.js"></script>
+	<script src="../js/crypto.js"></script>
+	<script src="../js/status.js"></script>
+	<script src="../js/ninja.js"></script>
+	<script src="../js/map.js"></script>
+    <link href="../css/style.css" rel="stylesheet">
+	<style>
+			.pop {
+				position:absolute;
+				top:0;
+				left:0;
+				display:none;
+				background-color:#fff;
+				opacity:1.0;
+				padding:20px;
+				border:3px;
+				border-color:#0505FF;
+				border-style:solid;
+			}
+			  html, body { height: 100%; margin: 0; padding: 0; }
+			  #map { height: 800px; width: 70%; }
+			  #result { height: 800px; width: 70%; position:absolute; top:800px; left:30%; }
+			  .reg { background:#bababa; text-decoration:none; }
+			  .rega { background:#ff2a2a; text-decoration:none; }
+			  .infoleft { float: left; width: 100px; text-wrap:none;}
+			  .inforight { float: right; width: 60px; height:18px; text-align: right; color: #ff0000; text-wrap:none; }
+	</style>
+	<script type='text/javascript'>
+			var ins = ['vertex', 'border', 'polygon', 'right', 'input', 'output', 'output2', 'output3'];
+	  </script>
+</head>
+<body>
+
+<div style='width:100%;height:100%;' id=map></div><div id=result></div></div>
+
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=sSelQoVi2L3KofLo1HOobonW"></script>
+<script type="text/javascript">
+	zoom = 1;
+	north = 90; south = -90; east = -180; west = 180; lat = 0; lng = 0;
+
+	function showMap() {
+		// 百度地图API功能
+		map = new BMap.Map("map");            // 创建Map实例
+		map.centerAndZoom(new BMap.Point(lng ,lat),1);  //初始化时，即可设置中心点和地图缩放级别。
+		map.enableScrollWheelZoom(true);
+
+		map.addEventListener("click", getPoint);
+	}
+	showMap();
+
+    window.chrome.webview.addEventListener('message', arg => {
+		if ("Passwd" in arg.data) {
+			serverpass = arg.data.Passwd;
+		}
+	});
+	window.chrome.webview.postMessage("Ready");
+</script>
+
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!doctype html>
+<html>
+<head>
+	<title>omegasuite.org</title>
+	<meta charset="utf-8">
+
+	<meta name="referrer" content="no-referrer">
+	<meta name="Access-Control-Allow-Headers" content="Content-Type, Accept, Authorization">
+	<meta name="Access-Control-Allow-Origin" content="*">
+
+	<script src="../js/jquery-1.10.2.min.js"></script>
+	<script src="../js/crypto.js"></script>
+	<script src="../js/status.js"></script>
+	<script src="../js/ninja.js"></script>
+
+    <script src="../js/biginteger.js" type="text/javascript"></script>
+    <script src="../js/ecdsa.js" type="text/javascript"></script>
+    <script src="../js/omgutil.js" type="text/javascript"></script>
+
+	<link href="../css/style.css" rel="stylesheet">
+
+</head>
+<body>
+	<div id="main">
+		<div id="culturemenu">
+            <!-- div class="culturemenurow">
+                <span><a href="?culture=en" id="cultureen" class="selected" onclick="ninja.translator.translate('en'); return false;">English</a></span> |
+                <span><a href="?culture=zh-cn" id="culturezh-cn" onclick="ninja.translator.translate('zh-cn'); return false;">简体中文</a></span> |
+            </div -->
+		</div>
+		<div id="tagline">资产<br>(<a href=# onclick="merge();">合并&Omega;币资产</a>)</div>
+		<div id="testnet"></div>
+		<table><tr><td width=50%>
+		<div id="listofkeys">
+		</div></td><td valign=top>
+		<div id="detail">
+		</div></td></tr>
+		</table>
+	</div>
+
+	<script type="text/javascript">
+    window.chrome.webview.addEventListener('message', arg => {
+		if ("Passwd" in arg.data) {
+			serverpass = arg.data.Passwd;
+		}
+		if ("Type" in arg.data) {
+			assets(arg.data.Type, -1);
+		}
+		if ("Password" in arg.data) {
+			paswd = arg.data.Password;
+			merge();
+		}
+	});
+
+	var next = 0;
+	var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+	function createrawtransaction (txin, txout) {
+		var d = [txin, [], txout, 0];
+		var op = "createrawtransaction";
+		var param = {jsonrpc:"1.0", method:op, params:d, id:id};
+		var s = JSON.stringify(param);
+		id++;
+
+		$.ajax({
+			url:'http://127.0.0.1:8789',
+			type: "POST",
+			dataType: 'json',
+			async: false,
+			data:s,
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+		}).done(function (resp) {
+			result = resp;
+		});
+		return result;
+	}
+
+  function merge() {
+		var accounts = ["default", "imported"];		// "default", 
+		var k = 1;
+		
+		var allowed = [];
+		var output;
+		
+		var txin = [];
+		var txout = [];
+		var k = 0;
+		var v = 0n;
+
+		auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		var sending = function () {
+			var to = {tokentype:0, value: {val: (parseFloat(v) / 1.0E8 + 0.0)}};
+			var tmp = '{"' + output+ '":' + JSON.stringify(to) + '}';
+			var ps = JSON.parse(tmp);
+			var pv = v;
+
+			txout.push(ps);
+		
+			var thx = createrawtransaction(txin, txout);
+			if (thx.error) return false;
+
+			var hextx = thx.result.toLowerCase();
+
+			var result = false;
+
+			var d = {jsonrpc:"1.0",method:"walletpassphrase",params:[paswd,20],id:id};
+			id++;
+
+			$.ajax({
+				url:'http://127.0.0.1:8832',
+				type: "POST",	// different version of jquery has different name for this field
+				data:JSON.stringify(d),
+				global: true,
+				beforeSend: function(xhr) { 
+					xhr.setRequestHeader("Authorization", "Basic " + auth);
+				},
+				dataType:"json"
+			}).done(function (resp) {
+				if (resp.error) {
+					window.chrome.webview.postMessage("LockPrompt");
+//					window.chrome.webview.postMessage("ResetPassword");
+					return;
+				}
+
+				var d = {jsonrpc:"1.0",method:"signrawtransaction",params:[hextx, [], [], false],id:id};
+				id++;
+				$.ajax({
+					url:'http://127.0.0.1:8832',
+					type: "POST",	// different version of jquery has different name for this field
+					data:JSON.stringify(d),
+					global: true,
+					beforeSend: function(xhr) { 
+						xhr.setRequestHeader("Authorization", "Basic " + auth);
+					},
+					dataType:"json",
+				}).done(function (resp) {
+					thx = resp;
+					if (thx.error) return;
+
+					if (thx.result.hex)
+						hextx = thx.result.hex.toLowerCase();
+					else
+						hextx = thx.result.toLowerCase();
+
+					var d = {jsonrpc:"1.0",method:"sendrawtransaction",params:[hextx, true, 5],id:id};
+					id++;
+					$.ajax({
+						url:'http://127.0.0.1:8789',
+						type: "POST",	// different version of jquery has different name for this field
+						data:JSON.stringify(d),
+						global: true,
+						beforeSend: function(xhr) { 
+							xhr.setRequestHeader("Authorization", "Basic " + auth);
+						},
+						dataType:"json"
+					}).done(function (resp) {
+						thx = resp;
+						if (thx.error) return;
+							
+						hextx = thx.result.split(/\s/)[0].toLowerCase();
+						txin = [{txid:hextx, vout:0}];
+						txout = []
+						v = pv;
+						result = true;
+					});
+				});
+			});
+			return result;
+		}
+
+		for (var i = 0; i < accounts.length; i++) {
+			var d = '{"jsonrpc":"1.0","method":"getaddressesbyaccount","params":["' + accounts[i] + '"],"id":' + id.toString() + '}';
+			id++;
+
+			$.ajax({
+				url:'http://127.0.0.1:8832',
+				type: "POST",	// different version of jquery has different name for this field
+				data:d,
+				global: true,
+				beforeSend: function(xhr) { 
+					xhr.setRequestHeader("Authorization", "Basic " + auth);
+				},
+				dataType:"json",
+			}).done(function (resp) {
+				if (resp.error) return;
+				for (var j = 0; j < resp.result.length; j++) {
+					output = resp.result[j];
+					var d = omgutil.prototype.Base58.decode(resp.result[j]);
+					d = Crypto.util.bytesToHex(d.alice(0, 21)) + "41000000";
+					allowed.push(d);
+				}
+			});
+		}
+
+		var d = '{"jsonrpc":"1.0","method":"getasset","params":["*",' + kind + '],"id":' + id.toString() + '}';
+		id++;
+
+		$.ajax({
+			url:'http://127.0.0.1:8832',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) return;
+				
+				for (var j = 0; j < resp.result.length; j++) {
+					if (resp.result[j].TokenType != 0n) continue;
+					
+					if ((txin.length % 260) == 0) v -= 100000n;
+
+					var op = resp.result[j].Outpoint.split(":");
+					
+					txin.push({txid: op[1], vout: patseInt(op[1])});
+					k++;
+					v += resp.result[j].Value;
+
+					if (k < 60) continue;
+					if (!sending()) return;
+				}
+				if (txin.length > 1) sending();
+			},
+		});
+	}
+
+
+	function assets(kind, stype) {
+		document.getElementById("listofkeys").innerHTML = "Please wait ... ";
+
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		var d = '{"jsonrpc":"1.0","method":"getasset","params":["*",' + kind + '],"id":' + id.toString() + '}';
+		id++;
+
+		$.ajax({
+			url:'http://127.0.0.1:8832',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) {
+					document.getElementById("listofkeys").innerHTML = resp.error.message;
+					return;
+				}
+				var s = "<center><table><tr><th></th><th>类型</th><th>价值</th><th>UTXO</th></tr>";
+				var n0 = next;
+				for (var j = next; j < resp.result.length; j++) {
+					if (stype >= 0 && resp.result[j].TokenType != stype) {
+						n0 = j;
+						continue;
+					}
+					if (j > 100 + n0) continue;
+					if (j == 100 + n0) {
+						next += 100;
+//						s += "<tr><td colspan=3><a href=# onclick='assets(kind);'>more</a></td></tr>";
+						continue;
+					}
+					s += "<tr><th>" + (j + 1).toString() + "</th><th>";
+
+					if (stype < 0) {
+						s += "<a href=# onclick=assets(true," + resp.result[j].TokenType.toString() + ")>" + resp.result[j].TokenType.toString() + "</a>";
+					} else s += resp.result[j].TokenType.toString();
+
+					s += "</th><th>";
+					if (resp.result[j].TokenType & 1)
+						s += resp.result[j].VHash.substr(0, 10) + " ....... " + resp.result[j].VHash.substr(-15);
+					else if (resp.result[j].TokenType == 0) {
+						s += (resp.result[j].Value / 1.0e8) + " &omega;";
+					} else s += resp.result[j].Value.toString();
+					s += "</th><td>";
+					if (resp.result[j].Outpoint.length > 5) {
+						s += "<a href=# onclick=detail('" + resp.result[j].Outpoint +"');>" + resp.result[j].Outpoint.substr(0, 10) + " ....... " + resp.result[j].Outpoint.substr(-18) + "</a>";
+					}
+					s += "</td></tr>";
+				}
+				document.getElementById("listofkeys").innerHTML = s + "</table></center>";
+			},
+			error: function (xhr, status, error) {
+				document.getElementById("listofkeys").innerHTML = ninja.translator.get("Failed to open wallet");	// "打开钱包");
+			},
+		});
+	}
+
+	function detail(utxo) {
+		var utx = utxo.split(':');
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		var d = '{"jsonrpc":"1.0","method":"gettxout","params":["' + utx[0] + '",' + utx[1].toString() + ',false],"id":' + id.toString() + '}';
+		id++;
+		
+		$.ajax({
+			url:'http://127.0.0.1:8789',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) {
+					document.getElementById("detail").innerHTML += 'error: ' + resp.error.message;
+					return;
+				}
+				if (!resp.result) {
+					document.getElementById("detail").innerHTML += 'The UTXO is empty. Has it been spent?';
+					return;
+				}
+				var s = "<table>";
+				s += "<tr><td>bestblock (最新区块)</td><td>" + resp.result.bestblock + "</td></tr>";
+				s += "<tr><td>confirmations (确认次数)</td><td>" + resp.result.confirmations + "</td></tr>";
+				s += "<tr><td>height (高度)</td><td>" + resp.result.height + "</td></tr>";
+				s += "<tr><td>tokentype (类型)</td><td>" + resp.result.tokentype + "</td></tr>";
+				if (resp.result.tokentype & 1)
+					s += "<tr><td>value (价值)</td><td>" + resp.result.value.Hash + "</td></tr>";
+				else s += "<tr><td>value (价值)</td><td>" + resp.result.value.Val + "</td></tr>";
+				s += "<tr><td>rights (权益)</td><td>" + resp.result.rights + "</td></tr>";
+				s += "<tr><td>scriptPubKey (脚本)</td><td>" + resp.result.scriptPubKey.asm + "</td></tr>";
+				s += "<tr><td>pay to (付给)</td><td>" + resp.result.scriptPubKey.addresses[0] + "</td></tr>";
+				s += "<tr><td>coinbase (币基)</td><td>" + resp.result.coinbase + "</td></tr></table>";
+
+				document.getElementById("detail").innerHTML = '<hr>' + utxo + s + document.getElementById("detail").innerHTML;
+			},
+			error: function (xhr, status, error) {
+				document.getElementById("detail").innerHTML += ninja.translator.get("Failed to open wallet");	// "打开钱包");
+			},
+		});
+	}
+
+	</script>
+
+<script type="text/javascript">
+
+ninja.tab = {
+    select: function (walletTab) {
+        // detect type: normally an HtmlElement/object but when string then get the element
+        if (typeof walletTab === 'string') {
+            walletTab = document.getElementById(walletTab);
+        }
+        var walletType = walletTab.getAttribute("id");
+
+        if (walletTab.className.indexOf("selected") == -1) {
+            // unselect all tabs
+            for (var wType in ninja.wallets) {
+                document.getElementById(wType).className = "tab";
+                ninja.wallets[wType].close();
+            }
+
+            // don't open tab if entropy still being collected
+            // exceptions: brainwallet detailwallet
+            if (ninja.seeder.isStillSeeding == false || walletType == "brainwallet" || walletType == "detailwallet") {
+            	walletTab.className += " selected";
+            	document.getElementById("generate").style.display = "none";
+                ninja.wallets[walletTab.getAttribute("id")].open();
+            }
+            else if (ninja.seeder.isStillSeeding == true && !(walletType == "brainwallet" || walletType == "detailwallet")) {
+                document.getElementById("generate").style.display = "block";
+            }
+        }
+    },
+
+    whichIsOpen: function () {
+        return "singlewallet";
+
+        var isOpen;
+        for (var wType in ninja.wallets) {
+            isOpen = ninja.wallets[wType].isOpen();
+            if (isOpen) {
+                return wType;
+            }
+        }
+        return null;
+    }
+
+};
+
+ninja.getQueryString = function () {
+	var result = {}, queryString = location.search.substring(1), re = /([^&=]+)=([^&]*)/g, m;
+	while (m = re.exec(queryString)) {
+		result[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+	}
+	return result;
+};
+
+// change language
+ninja.translator.extractEnglishFromDomAndUpdateDictionary();
+
+if (ninja.getQueryString()["culture"] != undefined) {
+	ninja.translator.translate(ninja.getQueryString()["culture"]);
+} else {
+	ninja.translator.autoDetectTranslation();
+}
+
+	window.chrome.webview.postMessage("Ready");
+
+	</script>
+</body>
+</html>

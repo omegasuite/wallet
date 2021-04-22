@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+	<title>omegasuite.org</title>
+	<meta charset="utf-8">
+
+	<meta name="referrer" content="no-referrer">
+	<meta name="Access-Control-Allow-Headers" content="Content-Type, Accept, Authorization">
+	<meta name="Access-Control-Allow-Origin" content="*">
+
+	<script src="../js/jquery-1.10.2.min.js"></script>
+	<script src="../js/crypto.js"></script>
+	<script src="../js/status.js"></script>
+	<script src="../js/ninja.js"></script>
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+	<div id="main">
+		<div id="culturemenu">
+            <!-- div class="culturemenurow">
+                <span><a href="?culture=en" id="cultureen" class="selected" onclick="ninja.translator.translate('en'); return false;">English</a></span> |
+                <span><a href="?culture=zh-cn" id="culturezh-cn" onclick="ninja.translator.translate('zh-cn'); return false;">简体中文</a></span> |
+            </div -->
+		</div>
+		<div id="tagline">签署交易</div>
+		<div id="testnet"></div>
+			<button onclick=signtx();>签署已输入的交易</button><br>
+			或者<br>
+			<button onclick=signrawtx();>签署以下原始交易</button><br>
+			原始交易：<textarea style="width:600;height:800;" id=rawtx placeholer='请在此粘贴原始交易'></textarea><br>
+		<div id="listofkeys" style="width:100%;height:800;">
+		</div>
+	</div>
+
+	<script type="text/javascript">
+
+	var inputs = [];
+	var outputs = [];
+	var rawtx;
+	var signedtx;
+
+    window.chrome.webview.addEventListener('message', arg => {
+		if ("Input" in arg.data) {
+			inputs = arg.data.Input;
+		}
+		if ("Outputs" in arg.data) {
+			outputs = arg.data.Outputs;
+		}
+		if ("Passwd" in arg.data) {
+			serverpass = arg.data.Passwd;
+		}
+		if ("Password" in arg.data) {
+			unlock(arg.data.Password);
+		}
+	});
+
+	function signtx() {
+		var arr = [];
+		for (var i = 0; i < inputs.length; i++)	{
+			var spt = inputs[i].split(":");
+			arr.push({txid: spt[0], vout: parseInt(spt[1])});
+		}
+		var txin = JSON.stringify(arr);
+
+		var txout = '[';
+		var glue = '';
+		for (var i = 0; i < outputs.length; i++) {
+			txout += glue + '{"' + outputs[i].receipient + '":';
+
+			if (outputs[i].tokentype & 1)
+				txout += JSON.stringify({tokentype: outputs[i].tokentype, value: {Hash: outputs[i].amount}});
+			else txout += JSON.stringify({tokentype: outputs[i].tokentype, value: {val: outputs[i].amount}});
+
+			txout += '}';
+			glue = ',';
+		}
+		txout += ']';
+
+		var id = (new Date().getTime()) & 0xFFFF;	
+		var d = '{"jsonrpc":"1.0","method":"createrawtransaction","params":[' + txin + ',[],' + txout + ',0],"id":' + id.toString() + '}';
+		id++;
+
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		$.ajax({
+			url:'http://127.0.0.1:8789',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) {
+					document.getElementById("listofkeys").innerHTML = resp.error.message;
+					return;
+				}
+
+				rawtx = resp.result;
+				window.chrome.webview.postMessage("LockPrompt");
+			},
+			error: function (xhr, status, error) {
+				document.getElementById("listofkeys").innerHTML = ninja.translator.get("Failed to open wallet");	// "打开钱包");
+			},
+		});
+	}
+
+	function signrawtx() {
+		rawtx = document.getElemenetById('rawtx').value;
+		window.chrome.webview.postMessage("LockPrompt");
+	}
+
+	function unlock(pswd) {
+		var d = '{"jsonrpc":"1.0","method":"walletpassphrase","params":["' + pswd + '",200],"id":' + id.toString() + '}';
+		id++;
+
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		$.ajax({
+			url:'http://127.0.0.1:8832',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) {
+					window.chrome.webview.postMessage("ResetPassword");
+					document.getElementById("inputres").innerHTML = resp.error.message;
+					return;
+				}
+				signingrawtx();
+			},
+			error: function (xhr, status, error) {
+				document.getElementById("inputres").innerHTML = ninja.translator.get("Failed to open wallet");	// "打开钱包");
+			},
+		});
+	}
+
+	function submittx() {
+		var d = '{"jsonrpc":"1.0","method":"sendrawtransaction","params":["' + signedtx + '",true,30],"id":"' + id.toString() + '"}';
+		id++;
+
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		$.ajax({
+			url:'http://127.0.0.1:8789',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) {
+					document.getElementById("listofkeys").innerHTML = resp.error.message;
+					return;
+				}
+			
+				document.getElementById("listofkeys").innerHTML = resp.result;
+			},
+			error: function (xhr, status, error) {
+				document.getElementById("listofkeys").innerHTML = ninja.translator.get("Failed to open wallet");	// "打开钱包");
+			},
+		});
+	}
+
+	function signingrawtx() {
+		var d = '{"jsonrpc":"1.0","method":"signrawtransaction","params":["' + rawtx + '",[],[],false],"id":' + id.toString() + '}';
+		id++;
+
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		$.ajax({
+			url:'http://127.0.0.1:8832',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) {
+					document.getElementById("listofkeys").innerHTML = resp.error.message;
+					return;
+				}
+
+				signedtx = resp.result.hex;
+				
+				document.getElementById("listofkeys").innerHTML = "签署的原始交易：<textarea style='width:600px;height:800;'>" + resp.result.hex + "</textarea><br><button onclick=submittx();>提交交易</button><hr><small>如果相关各方都已签名，您可以提交交易。否则，您可以将上述签署的原始交易发送给其他方，由他们签署之后提交。</small>";
+			},
+			error: function (xhr, status, error) {
+				document.getElementById("listofkeys").innerHTML = ninja.translator.get("Failed to open wallet");	// "打开钱包");
+			},
+		});
+	}
+
+	</script>
+
+<script type="text/javascript">
+
+ninja.tab = {
+    select: function (walletTab) {
+        // detect type: normally an HtmlElement/object but when string then get the element
+        if (typeof walletTab === 'string') {
+            walletTab = document.getElementById(walletTab);
+        }
+        var walletType = walletTab.getAttribute("id");
+
+        if (walletTab.className.indexOf("selected") == -1) {
+            // unselect all tabs
+            for (var wType in ninja.wallets) {
+                document.getElementById(wType).className = "tab";
+                ninja.wallets[wType].close();
+            }
+
+            // don't open tab if entropy still being collected
+            // exceptions: brainwallet detailwallet
+            if (ninja.seeder.isStillSeeding == false || walletType == "brainwallet" || walletType == "detailwallet") {
+            	walletTab.className += " selected";
+            	document.getElementById("generate").style.display = "none";
+                ninja.wallets[walletTab.getAttribute("id")].open();
+            }
+            else if (ninja.seeder.isStillSeeding == true && !(walletType == "brainwallet" || walletType == "detailwallet")) {
+                document.getElementById("generate").style.display = "block";
+            }
+        }
+    },
+
+    whichIsOpen: function () {
+        return "singlewallet";
+
+        var isOpen;
+        for (var wType in ninja.wallets) {
+            isOpen = ninja.wallets[wType].isOpen();
+            if (isOpen) {
+                return wType;
+            }
+        }
+        return null;
+    }
+
+};
+
+ninja.getQueryString = function () {
+	var result = {}, queryString = location.search.substring(1), re = /([^&=]+)=([^&]*)/g, m;
+	while (m = re.exec(queryString)) {
+		result[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+	}
+	return result;
+};
+
+// change language
+ninja.translator.extractEnglishFromDomAndUpdateDictionary();
+
+if (ninja.getQueryString()["culture"] != undefined) {
+	ninja.translator.translate(ninja.getQueryString()["culture"]);
+} else {
+	ninja.translator.autoDetectTranslation();
+}
+
+	window.chrome.webview.postMessage("Ready");
+
+	</script>
+</body>
+</html>

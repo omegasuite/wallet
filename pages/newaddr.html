@@ -1,0 +1,675 @@
+<!doctype html>
+<html>
+<head>
+	<title>omegasuite.org</title>
+	<meta charset="utf-8">
+
+	<meta name="referrer" content="no-referrer">
+	<meta name="Access-Control-Allow-Headers" content="Content-Type, Accept, Authorization">
+
+	<script src="../js/jquery-1.10.2.min.js"></script>
+	<script src="../js/status.js"></script>
+
+	<style type="text/css">
+a { position: relative; z-index: 20; }
+.right { text-align: right; }
+.walletarea { display: none; border: 2px solid #009900; }
+hr { margin: 20px 0; border-top: 2px dashed #008000; }
+.keyarea { height: 110px; text-align: left; position: relative; padding: 5px; }
+.keyarea .public { float: left; }
+.keyarea .pubaddress { display: inline-block; height: 40px; padding: 0 0 0 10px; float: left; }
+.keyarea .privwif { margin: 0;  float: right; text-align: right; padding: 0 20px 0 0; position: relative; }
+.keyarea .label { font-weight: bold; }
+.keyarea .output { display: block; font-family: monospace; font-size: 1.25em; }
+.keyarea .qrcode_public { display: inline-block; float: left; }
+.keyarea .qrcode_private { display: inline-block; position: relative; top: 28px; float: right; }
+.pubkeyhex { word-wrap: break-word; }
+body { font-family: Arial; }
+body, html { height: 99%; }
+.faqs ol { padding: 0 0 0 25px; }
+.faqs li { padding: 3px 0; }
+.question { padding: 10px 15px; text-align: left; cursor: pointer; }
+.question:hover, .expandable:hover { color: #77777A; }
+.answer { padding: 0 15px 10px 25px; text-align: left; display: none; font-size: 80%; }
+.faq { border: 0; border-top: 2px solid #009900; }
+.button { margin-left: 5px; margin-right: 5px; }
+input[type=checkbox] { position: relative; z-index: 20; }
+
+#wallets { clear: both; }
+#btcaddress, #btcprivwif, #detailaddress, #detailaddresscomp, #detailprivwif, #detailprivwifcomp { font-family: monospace; font-size: 1.25em; }
+#seedpoolarea { display: none; }
+#seedpooldisplay {  font-family: monospace; font-size: 1em; width: 640px; padding: 15px 5px; word-wrap: break-word; }
+.seedpoint { width: 6px; height: 6px; display: block; border-radius: 3px; background-color: #009900; position: absolute; z-index: 10; }
+#generate { font-family: monospace; font-size: 1.25em; height: 305px; text-align: left; position: relative; padding: 5px; border: 2px solid #009900; clear: both; }
+#generate span { padding: 5px 5px 0 5px; }
+#generatekeyinput { position: relative; z-index: 20; }
+#keyarea { height: 250px; }
+#keyarea .pubaddress { float: none; display: block; padding: 0; height: auto; }
+#keyarea .label { text-decoration: none; }
+#keyarea .privwif { float: none; text-align: right; position: relative; padding: 0; }
+#keyarea .qrcode_public { float: none; display: block; padding: 13px 11px 11px 11px; }
+#keyarea .qrcode_private { float: none; display: block; top: 0; text-align: right; padding: 13px 11px 11px 11px; }
+#keyarea .private { width: 30%; display: table-cell; }
+#keyarea .public { width: 30%; display: table-cell; }
+#singlearea { font-size: 90%; }
+#singlesecret { position: relative; top: -130px; float: right; right: 200px; color: red; font-weight: bolder; font-size: 200%;  }
+#singleshare { position: relative; top: -110px; float: left; left: 160px; color: #009900; font-weight: bolder; font-size: 200%;  }
+#singlesafety { text-align: left; padding: 5px; border-top: 2px solid #009900; top: -25px; position: relative; }
+
+#main { position: relative; text-align: center; margin: 0px auto; width: 808px; }
+#logo { width: 578px; height: 80px; }
+		
+#paperarea { min-height: 120px; display: none; }
+#paperarea .keyarea { border: 2px solid #009900; border-top: 0; }
+#paperarea .keyarea.art { display: block; height: auto; border: 0; font-family: Ubuntu, Arial; padding: 0; margin: 0; }
+#paperarea .artwallet .papersvg { width: 486px; height: 261px; border: 0; margin: 0; padding: 0; left: 0; }
+#paperarea .artwallet .qrcode_public { top: 52px; left: 17px; z-index: 100; margin: 0; float: none; display: block; position: absolute; background-color: #FFFFFF; 
+		                                padding: 5px 5px 2px 5px; } 
+#paperarea .artwallet .qrcode_private { top: 104px; left: 360px; z-index: 100; margin: 0; float: none; display: block; position: absolute; background-color: #FFFFFF; 
+		                                padding: 5px 5px 2px 5px; }
+#paperarea .artwallet .btcaddress  
+{
+	position: absolute; top: 240px; left: 139px; z-index: 100; font-size: 10px; background-color: transparent;
+	font-weight:bold; color: #000000; margin: 0;
+		-webkit-transform-origin:top left; -webkit-transform:rotate(-90deg);
+		-moz-transform-origin:top left;    -moz-transform:rotate(-90deg);
+		-ms-transform-origin:top left;     -ms-transform:rotate(-90deg);
+		-o-transform-origin:top left;      -o-transform:rotate(-90deg);
+		transform-origin:top left;         transform:rotate(-90deg);
+} 
+#paperarea .artwallet .btcprivwif  
+{
+	position: absolute; top: 236px; left: 346px; z-index: 100; font-size: 7px; background-color: transparent;
+	font-weight:bold; color: #000000; margin: 0;  
+		-webkit-transform-origin:top left; -webkit-transform:rotate(-90deg);
+		-moz-transform-origin:top left;    -moz-transform:rotate(-90deg);
+		-ms-transform-origin:top left;     -ms-transform:rotate(-90deg);
+		-o-transform-origin:top left;      -o-transform:rotate(-90deg);
+		transform-origin:top left;         transform:rotate(-90deg);
+}
+#paperarea .artwallet .btcencryptedkey
+{
+	position: absolute; top: 174px; left: 332px; z-index: 100; font-size: 8px; background-color: transparent;
+	font-weight:bold; color: #000000; margin: 0;  
+		-webkit-transform-origin:top left; -webkit-transform:rotate(-90deg);
+		-moz-transform-origin:top left;    -moz-transform:rotate(-90deg);
+		-ms-transform-origin:top left;     -ms-transform:rotate(-90deg);
+		-o-transform-origin:top left;      -o-transform:rotate(-90deg);
+		transform-origin:top left;         transform:rotate(-90deg);
+}
+#bulkarea .body { padding: 5px 0 0 0; }
+#bulkarea .format { font-style: italic; font-size: 90%; }
+#bulktextarea { font-size: 90%; width: 98%; margin: 4px 0 0 0; }
+#brainarea .keyarea { visibility: hidden; min-height: 110px; }
+#brainview { margin-left: 5px; }
+#detailkeyarea { padding: 10px; }
+#detailarea { margin: 0; text-align: left; }
+#detailarea .notes { text-align: left; font-size: 80%; padding: 0 0 20px 0; }
+#detailarea .pubqr .item .label { text-decoration: none; }
+#detailarea .pubqr .item { float: left; margin: 10px 0; position: relative; }
+#detailarea .pubqr .item.right { float: right; position: relative; top: 0; } 
+#detailarea .privqr .item .label { text-decoration: none; }
+#detailarea .privqr .item { float: left; margin: 0; position: relative; }
+#detailarea .privqr .item.right { float: right; position: relative; } 
+#detailarea .item { margin: 10px 0; position: relative; font-size: 90%; padding: 1px 0; }
+#detailarea .item.clear { clear: both; padding-top: 10px; }
+#detailarea .label { display: block; font-weight: bold; }
+#detailarea .output { display: block; font-family: monospace; font-size: 1.25em; }
+#detailarea #detailqrcodepublic { position: relative; float: left; margin: 0 10px 0 0; padding: 13px 11px 11px 11px; }
+#detailarea #detailqrcodepubliccomp { position: relative; float: right; margin: 0 0 0 10px; padding: 13px 11px 11px 11px; }
+#detailarea #detailqrcodeprivate { position: relative; float: left; margin: 0 10px 0 0; padding: 13px 11px 11px 11px; }
+#detailarea #detailqrcodeprivatecomp { position: relative; float: right; margin: 0 0 0 10px; padding: 13px 11px 11px 11px; }
+#detailarea #detailqrcodeprivatebip38 { position: relative; margin: 0 10px 0 0; padding: 13px 11px 11px 11px; }
+#detailpubkey { width: 590px; }
+#detailbip38commands { display: none; padding-top: 5px; }
+#detailbip38toggle { padding-top: 5px; }
+#vanityarea { text-align: left; }
+#vanityarea .label { text-decoration: underline; }
+#vanityarea .output { font-family: monospace; font-size: 1.25em; display: block; }
+#vanityarea .notes { text-align: left; font-size: 80%; padding: 0 0 20px 0; }
+#vanitystep1area { display: none; text-align: left; position: relative; padding: 15px; border-bottom: 2px solid #009900; }
+#vanitystep1label { padding-left: 5px; }
+#vanitystep2area { border-top: 2px solid #009900; display: block; padding: 15px; }
+#vanitystep2inputs { padding: 0 15px 10px 15px; }
+#vanitycalc { margin-top: 5px; }
+
+#splitarea { text-align: left; }
+#splitarea span { padding: 0; }
+#splitcommands { padding: 10px 15px; text-align: left; }
+#combinecommands { padding: 10px 15px; }
+#splitstep1area { display: none; text-align: left; position: relative; padding: 0; border-bottom: 2px solid #009900; }
+.splitsharerow { border-bottom: 2px solid #009900; padding: 15px; }
+.splitsharerow:last-child { border-bottom: 0; }
+#combinelabelprivatekey { text-decoration: underline; }
+#splitarea .output { display: block; font-family: monospace; font-size: 1.25em; }
+#splitarea span.output { display: inline; }
+#splitstep2area { padding:  10px 15px; }
+
+.englishjson { text-align: center; padding: 40px 0 20px 0; }
+.unittests { text-align: center; }
+.unittests div { width: 894px; font-family: monospace; text-align: left; margin: auto; padding: 5px; border: 1px solid black; }
+#testnet { display: none; background-color: Orange; color: #000000; border-radius: 5px; font-weight: bold; padding: 10px 0; margin: 0 auto 20px auto; }
+.hide { display: none; }
+.show { display: block; }
+		
+@media screen 	
+{
+	#tagline { margin: 0 0 15px 0; font-style: italic; }
+	.menu  
+	{
+	    text-align: left; margin: 0; padding: 0; display: block;
+	    background-color: #009900; /* # 009900 # 53c100 */
+	    border-top-left-radius: 5px; border-top-right-radius: 5px;
+	}
+	.menu .tab 
+	{
+	    position: relative; display: inline-block; border: 0px solid red;
+	    margin: 0; list-style: none; z-index: 110; cursor: pointer; 
+	    top: 1px; padding: 10px 20px; width: 162px; text-align: center;
+	}
+	.menu .tab.selected  
+	{
+	    cursor: default; 
+	    background-color: #FFF; margin: 6px 16px; padding: 4px; border-radius: 5px; 
+	}
+	.menu .tab:hover  
+	{
+	    background-color: #FFF; margin: 6px 16px; padding: 4px; border-radius: 5px; 
+	}
+	.menu .tab.selected:hover { color: #000; }
+	
+    .pagebreak { height: 50px; }
+	.commands { border-bottom: 2px solid #009900;  padding: 10px 2px; margin-bottom: 0; }
+	.commands .row { padding: 0 0; text-align: left; } 
+	.commands .row.extra { padding-top: 6px; }
+	.commands span { padding: 0 10px; }
+	.commands span.print { float: right; position: relative; z-index: 20; }
+	.commands span.right { float: right; }
+	.expandable { padding: 10px 15px; text-align: left; cursor: pointer; }
+
+    #menu { visibility: visible; font-size: 90%; }
+    #culturemenu { text-align: center; padding: 0 10px 5px 10px; margin-bottom: 3px; font-size: 90%; }
+    #culturemenu span { padding: 3px; }
+    #culturemenu .selected { text-decoration: none; color: #000000; }
+    .culturemenurow { padding: 2px 0; }
+
+	#braincommands .row .label { width: 200px; display: inline-block; }
+	#braincommands .notes { font-size: 80%; display: block; padding: 5px 10px; }
+	#brainpassphrase { width: 280px; position: relative; z-index: 20; }
+	#brainpassphraseconfirm { width: 280px; position: relative; z-index: 20; }
+    #brainpassphraseshow { position: relative; z-index: 20; }
+    #brainview { position: relative; z-index: 20; }
+	#brainwarning {  }
+	#detailcommands { padding: 10px 0; }
+	#detailcommands span { padding: 0 10px; }
+	#detailprivkey { width: 460px; position: relative; z-index: 20; }
+	#detailprivkeypassphrase { width: 250px; position: relative; z-index: 20; }
+	#detailcommands .button { position: relative; z-index: 20; }
+	#detailbip38encryptspan { display: none; }
+	.paper .commands { border: 2px solid #009900; }
+	#bulkstartindex, #paperlimit, #paperlimitperpage { width: 35px; } 
+	#bulklimit { width: 45px; }
+			
+	.footer { font-size: 90%; clear: both; width: 770px; padding: 10px 0 10px 0; margin: 50px auto auto auto; }
+	.footer div span.item { padding: 10px; }
+	.footer .authorbtc { float: left; width: 470px; }
+	.footer .authorbtc span.item { text-align: left; display: block; padding: 0 20px; }
+	.footer .authorbtc div { position: relative; z-index: 100; }
+	.footer .authorpgp { position: relative; }
+	.footer .authorpgp span.item { text-align: right; display: block; padding: 0 20px; }
+	.footer .copyright { font-size: 80%; clear: both; padding: 5px 0; }
+	.footer .copyright span { padding: 10px 2px; }
+    .footer .tooltip { display: none; text-align: left; border: 2px solid green; background-color: #FFFFF6; margin: 5px; padding: 10px; top: 0px; position: relative;  }
+	.footer .statusgood { color: green; font-weight: bold; }
+    .footer .statuswarn { color: orange; font-weight: bold; }
+	.footer .statusbad { color: red; font-weight: bold; }
+    .footer .statusicon { background-color: none; font-size: 120%; padding: 1px 2px; }
+    .footer .statusicon:hover { background-color: green; cursor: pointer; }
+}
+@media print
+{
+	#main { width: auto; }
+	#singlearea { border: 0; }
+	#singlesafety { border: 0; }
+	#paperarea .keyarea:first-child { border-top: 2px solid #009900; }
+	#paperarea .keyarea.art:first-child { border: 0; }
+	.pagebreak { height: 1px; }
+	.paper #logo { display: none; }
+	.menu, .footer, .commands, #tagline, #faqs, #culturemenu { display: none; }
+	#detailprivwif { width: 285px; word-wrap: break-word; }
+	#detailprivwifcomp { width: 310px; word-wrap: break-word; text-align: right; }
+	#detailarea .privqr .item.right { width: 310px; }
+	#detailarea .privqr .item { width: 285px; }
+	#detailarea .notes { display: none; }
+	#seedpoolarea { display: none; }
+	.faq { display: none; }
+}
+
+	</style>
+</head>
+<body>
+	<div id="main">
+		<div id="culturemenu">
+            <!-- div class="culturemenurow">
+                <span><a href="?culture=en" id="cultureen" class="selected" onclick="ninja.translator.translate('en'); return false;">English</a></span> |
+                <span><a href="?culture=zh-cn" id="culturezh-cn" onclick="ninja.translator.translate('zh-cn'); return false;">简体中文</a></span> |
+            </div -->
+		</div>
+		<div id="tagline">Generating New Addresses Automatically</div>
+		<div id="testnet"></div>
+		<div id="listofkeys">
+		</div>
+	</div>
+	<script type="text/javascript">
+/*!
+* Crypto-JS v2.5.4	Crypto.js
+* http://code.google.com/p/crypto-js/
+* Copyright (c) 2009-2013, Jeff Mott. All rights reserved.
+* http://code.google.com/p/crypto-js/wiki/License
+*/
+if (typeof Crypto == "undefined" || !Crypto.util) {
+	(function () {
+
+		var base64map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+		// Global Crypto object
+		var Crypto = window.Crypto = {};
+
+		// Crypto utilities
+		var util = Crypto.util = {
+
+			// Bit-wise rotate left
+			rotl: function (n, b) {
+				return (n << b) | (n >>> (32 - b));
+			},
+
+			// Bit-wise rotate right
+			rotr: function (n, b) {
+				return (n << (32 - b)) | (n >>> b);
+			},
+
+			// Swap big-endian to little-endian and vice versa
+			endian: function (n) {
+
+				// If number given, swap endian
+				if (n.constructor == Number) {
+					return util.rotl(n, 8) & 0x00FF00FF |
+			    util.rotl(n, 24) & 0xFF00FF00;
+				}
+
+				// Else, assume array and swap all items
+				for (var i = 0; i < n.length; i++)
+					n[i] = util.endian(n[i]);
+				return n;
+			},
+
+			// Generate an array of any length of random bytes
+			randomBytes: function (n) {
+				for (var bytes = []; n > 0; n--)
+					bytes.push(Math.floor(Math.random() * 256));
+				return bytes;
+			},
+
+			// Convert a byte array to big-endian 32-bit words
+			bytesToWords: function (bytes) {
+				for (var words = [], i = 0, b = 0; i < bytes.length; i++, b += 8)
+					words[b >>> 5] |= (bytes[i] & 0xFF) << (24 - b % 32);
+				return words;
+			},
+
+			// Convert big-endian 32-bit words to a byte array
+			wordsToBytes: function (words) {
+				for (var bytes = [], b = 0; b < words.length * 32; b += 8)
+					bytes.push((words[b >>> 5] >>> (24 - b % 32)) & 0xFF);
+				return bytes;
+			},
+
+			// Convert a byte array to a hex string
+			bytesToHex: function (bytes) {
+				for (var hex = [], i = 0; i < bytes.length; i++) {
+					hex.push((bytes[i] >>> 4).toString(16));
+					hex.push((bytes[i] & 0xF).toString(16));
+				}
+				return hex.join("");
+			},
+
+			// Convert a hex string to a byte array
+			hexToBytes: function (hex) {
+				for (var bytes = [], c = 0; c < hex.length; c += 2)
+					bytes.push(parseInt(hex.substr(c, 2), 16));
+				return bytes;
+			},
+
+			// Convert a byte array to a base-64 string
+			bytesToBase64: function (bytes) {
+				for (var base64 = [], i = 0; i < bytes.length; i += 3) {
+					var triplet = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
+					for (var j = 0; j < 4; j++) {
+						if (i * 8 + j * 6 <= bytes.length * 8)
+							base64.push(base64map.charAt((triplet >>> 6 * (3 - j)) & 0x3F));
+						else base64.push("=");
+					}
+				}
+
+				return base64.join("");
+			},
+
+			// Convert a base-64 string to a byte array
+			base64ToBytes: function (base64) {
+				// Remove non-base-64 characters
+				base64 = base64.replace(/[^A-Z0-9+\/]/ig, "");
+
+				for (var bytes = [], i = 0, imod4 = 0; i < base64.length; imod4 = ++i % 4) {
+					if (imod4 == 0) continue;
+					bytes.push(((base64map.indexOf(base64.charAt(i - 1)) & (Math.pow(2, -2 * imod4 + 8) - 1)) << (imod4 * 2)) |
+			        (base64map.indexOf(base64.charAt(i)) >>> (6 - imod4 * 2)));
+				}
+
+				return bytes;
+			}
+
+		};
+
+		// Crypto character encodings
+		var charenc = Crypto.charenc = {};
+
+		// UTF-8 encoding
+		var UTF8 = charenc.UTF8 = {
+
+			// Convert a string to a byte array
+			stringToBytes: function (str) {
+				return Binary.stringToBytes(unescape(encodeURIComponent(str)));
+			},
+
+			// Convert a byte array to a string
+			bytesToString: function (bytes) {
+				return decodeURIComponent(escape(Binary.bytesToString(bytes)));
+			}
+
+		};
+
+		// Binary encoding
+		var Binary = charenc.Binary = {
+
+			// Convert a string to a byte array
+			stringToBytes: function (str) {
+				for (var bytes = [], i = 0; i < str.length; i++)
+					bytes.push(str.charCodeAt(i) & 0xFF);
+				return bytes;
+			},
+
+			// Convert a byte array to a string
+			bytesToString: function (bytes) {
+				for (var str = [], i = 0; i < bytes.length; i++)
+					str.push(String.fromCharCode(bytes[i]));
+				return str.join("");
+			}
+
+		};
+
+	})();
+}	
+	</script>
+
+	<script type="text/javascript">
+	var ninja = { };
+
+(function (ninja) {
+	var translator = ninja.translator = {
+		currentCulture: "en",
+
+		autoDetectTranslation: function () {
+			// window.navigator.language for Firefox / Chrome / Opera Safari
+			// window.navigator.userLanguage for IE
+			var language = window.navigator.language || window.navigator.userLanguage;
+			if (!this.translate(language)) {
+				// Try to remove part after dash, for example cs-CZ -> cs
+				language = language.substr(0, language.indexOf('-'));
+				this.translate(language);
+			}
+		},
+
+		translate: function (culture) {
+			var dict = translator.translations[culture];
+			if (dict) {
+				// set current culture
+				translator.currentCulture = culture;
+				// update menu UI
+				for (var cult in translator.translations) {
+					var cultureElement = document.getElementById("culture" + cult);
+					if (cultureElement != null) {
+						cultureElement.setAttribute("class", "");
+					}
+					else {
+						console.log("DOM element not found: " + "culture" + cult);
+					}
+					document.getElementById("culture" + culture).setAttribute("class", "selected");
+				}
+				// apply translations
+				for (var id in dict) {
+					if (document.getElementById(id) && document.getElementById(id).value) {
+						document.getElementById(id).value = dict[id];
+					}
+					else if (document.getElementById(id)) {
+						document.getElementById(id).innerHTML = dict[id];
+					}
+				}
+				return true;
+			} else {
+				return false;
+			}
+		},
+
+		get: function (id) {
+			var translation = translator.translations[translator.currentCulture][id];
+			return translation;
+		},
+
+		translations: {
+			"en": {
+				// javascript alerts or messages
+				"Enter prvate key": "Enter prvate key",
+
+				// messages
+				"Failed to import private key": "Failed to import private key",
+				"Failed to unlock wallet": "Failed to unlock wallet",
+				"Private key imported into wallet": "Private key imported into wallet."
+			}
+		},
+
+		extractEnglishFromDomAndUpdateDictionary: function () {
+			var english = translator.translations["en"];
+			var spanish = translator.translations["es"];
+			var spanishClone = {};
+			for (var key in spanish) {
+				spanishClone[key] = spanish[key];
+			}
+			var newLang = {};
+			for (var key in english) {
+				newLang[key] = english[key];
+				delete spanishClone[key];
+			}
+			for (var key in spanishClone) {
+				if (document.getElementById(key)) {
+					if (document.getElementById(key).value) {
+						newLang[key] = document.getElementById(key).value;
+					}
+					else {
+						newLang[key] = document.getElementById(key).innerHTML;
+					}
+				}
+			}
+			translator.translations["en"] = newLang;
+		},
+
+		showEnglishJson: function () {
+			var english = ninja.translator.translations["en"];
+			var spanish = ninja.translator.translations["es"];
+			var spanishClone = {};
+			for (var key in spanish) {
+				spanishClone[key] = spanish[key];
+			}
+			var newLang = {};
+			for (var key in english) {
+				newLang[key] = english[key];
+				delete spanishClone[key];
+			}
+			for (var key in spanishClone) {
+				if (document.getElementById(key)) {
+					if (document.getElementById(key).value) {
+						newLang[key] = document.getElementById(key).value;
+					}
+					else {
+						newLang[key] = document.getElementById(key).innerHTML;
+					}
+				}
+			}
+			var div = document.createElement("div");
+			div.setAttribute("class", "englishjson");
+			div.innerHTML = "<h3>English Json</h3>";
+			var elem = document.createElement("textarea");
+			elem.setAttribute("rows", "15");
+			elem.setAttribute("cols", "110");
+			elem.setAttribute("wrap", "off");
+			var langJson = "{\n";
+			for (var key in newLang) {
+				langJson += "\t\"" + key + "\"" + ": " + "\"" + newLang[key].replace(/\"/g, "\\\"").replace(/\n/g, "\\n") + "\",\n";
+			}
+			langJson = langJson.substr(0, langJson.length - 2);
+			langJson += "\n}\n";
+			elem.innerHTML = langJson;
+			div.appendChild(elem);
+			document.body.appendChild(div);
+
+		}
+	};
+})(ninja);
+
+﻿(function (translator) {
+	translator.translations["zh-cn"] = {
+		// javascript alerts or messages
+		"Enter prvate key": "输入私钥",
+
+		"Failed to import private key": "导入私钥失败",
+		"Failed to unlock wallet": "打开钱包失败",
+		"Private key imported into wallet": "导入私钥成功"
+	};
+})(ninja.translator);
+	</script>
+
+	<script type="text/javascript">
+    window.chrome.webview.addEventListener('message', arg => {
+		if ("Passwd" in arg.data) {
+			serverpass = arg.data.Passwd;
+		}
+		acceptkeys();
+	});
+
+	function acceptkeys() {
+		// 1. unlock using the pw
+		// 2. import priv key
+		var d = '{"jsonrpc":"1.0","method":"getnewaddress","params":["default"],"id":' + id.toString() + '}';
+
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		$.ajax({
+			url:'http://127.0.0.1:8832',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+		       	xhr.setRequestHeader("Authorization", "Basic " + auth);
+		   	},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) {
+					document.getElementById("listofkeys").innerHTML = resp.error.message;				
+					return;
+				}
+				id++;
+				var s = "New address is: " + resp.result;
+				document.getElementById("listofkeys").innerHTML = s;				
+				
+				window.chrome.webview.postMessage(`SetKeys ` + resp.result);		//  ${privateKeyWif}
+			},
+			error: function (xhr, status, error) {
+				document.getElementById("listofkeys").innerHTML = ninja.translator.get("Failed to open wallet");	// "打开钱包");
+				/*如果ninja.translator请求失败要运行的函数。
+				* xhr, XMLHttpRequest 对象。
+				* status, 请求状态（parsererror）。
+				* error, 错误信息。比如：error: SyntaxError: Unexpected token N in JSON at position 29。*/
+				console.log("xhr:", xhr);
+				console.log("status:", status);
+				console.log("error:", error);
+			},
+		});
+	}
+	</script>
+
+<script type="text/javascript">
+
+ninja.tab = {
+    select: function (walletTab) {
+        // detect type: normally an HtmlElement/object but when string then get the element
+        if (typeof walletTab === 'string') {
+            walletTab = document.getElementById(walletTab);
+        }
+        var walletType = walletTab.getAttribute("id");
+
+        if (walletTab.className.indexOf("selected") == -1) {
+            // unselect all tabs
+            for (var wType in ninja.wallets) {
+                document.getElementById(wType).className = "tab";
+                ninja.wallets[wType].close();
+            }
+
+            // don't open tab if entropy still being collected
+            // exceptions: brainwallet detailwallet
+            if (ninja.seeder.isStillSeeding == false || walletType == "brainwallet" || walletType == "detailwallet") {
+            	walletTab.className += " selected";
+            	document.getElementById("generate").style.display = "none";
+                ninja.wallets[walletTab.getAttribute("id")].open();
+            }
+            else if (ninja.seeder.isStillSeeding == true && !(walletType == "brainwallet" || walletType == "detailwallet")) {
+                document.getElementById("generate").style.display = "block";
+            }
+        }
+    },
+
+    whichIsOpen: function () {
+        return "singlewallet";
+
+        var isOpen;
+        for (var wType in ninja.wallets) {
+            isOpen = ninja.wallets[wType].isOpen();
+            if (isOpen) {
+                return wType;
+            }
+        }
+        return null;
+    }
+
+};
+
+ninja.getQueryString = function () {
+	var result = {}, queryString = location.search.substring(1), re = /([^&=]+)=([^&]*)/g, m;
+	while (m = re.exec(queryString)) {
+		result[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+	}
+	return result;
+};
+
+// change language
+ninja.translator.extractEnglishFromDomAndUpdateDictionary();
+if (ninja.getQueryString()["culture"] != undefined) {
+	ninja.translator.translate(ninja.getQueryString()["culture"]);
+} else {
+	ninja.translator.autoDetectTranslation();
+}
+
+	window.chrome.webview.postMessage("Ready");
+
+
+	</script>
+</body>
+</html>

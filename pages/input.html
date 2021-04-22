@@ -1,0 +1,200 @@
+<!doctype html>
+<html>
+<head>
+	<title>omegasuite.org</title>
+	<meta charset="utf-8">
+
+	<meta name="referrer" content="no-referrer">
+	<meta name="Access-Control-Allow-Headers" content="Content-Type, Accept, Authorization">
+	<meta name="Access-Control-Allow-Origin" content="*">
+
+	<script src="../js/jquery-1.10.2.min.js"></script>
+	<script src="../js/crypto.js"></script>
+	<script src="../js/status.js"></script>
+	<script src="../js/ninja.js"></script>
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+	<div id="main">
+		<div id="culturemenu">
+            <!-- div class="culturemenurow">
+                <span><a href="?culture=en" id="cultureen" class="selected" onclick="ninja.translator.translate('en'); return false;">English</a></span> |
+                <span><a href="?culture=zh-cn" id="culturezh-cn" onclick="ninja.translator.translate('zh-cn'); return false;">简体中文</a></span> |
+
+				x26543400 = BOE
+            </div -->
+		</div>
+		<div id="tagline">交易输入</div>
+		<div id="testnet"></div>
+		<div style="width:100%;height:800;">
+		<div id=inputsel style="border:2px solid green;border-radius: 5px;">
+			选择输入<br>
+			币种类：<select id=tokentype onchange="tokentypeselected(this.options[this.selectedIndex].value);"><option value=0>&omega;</option><option value=3>土地</option><option value=1129267712>BOE</option></select><br>
+			自有币：<div id=mycoins style="display:inline;width:80%;height:100px;overflow:scroll;">获取数据，请稍候。。。
+			</div> <br>
+			指定UTXO：<input type=text size=60 id=utxo><br>
+			<button onclick=inputselected();>选定</button><br>
+		</div>
+		<div>当前交易输入</div>
+		<div id=inputres style="border:2px solid green;border-radius: 5px;"></div>
+		<button onclick=clearall();>清除所有输入</button><br>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+
+	tokentypeselected(0);
+
+	function clearall() {
+		document.getElementById("inputres").innerHTML = "";
+		window.chrome.webview.postMessage("ClearInputs");
+	}
+
+	function setinput(input) {
+		var e = document.getElementById("inputres");
+
+		for (var i = 0; i < input.length; i++) {
+			e.innerHTML += input[i] + "<br>";
+		}
+	}
+
+	function inputselected() {
+		var coins = [];
+		var mycoins = document.getElementsByName("coins");
+		var utxo = document.getElementById("utxo").value;
+
+		if (utxo != "") coins.push(utxo);
+		for (var i = 0; i < mycoins.length; i++) {
+			if (mycoins[i].checked)	{
+				coins.push(mycoins[i].value);
+				mycoins[i].checked = false;
+			}
+		}
+
+		var jsn = '[';
+		var glue = '';
+		for (var i = 0; i < coins.length; i++) {
+			document.getElementById("inputres").innerHTML += coins[i] + "<br>";
+			jsn += glue + '"' + coins[i] + '"';
+			glue = ',';
+		}
+		jsn += ']';
+
+		window.chrome.webview.postMessage("AddInputs " + jsn);
+	}
+
+    window.chrome.webview.addEventListener('message', arg => {
+		if ("Passwd" in arg.data) {
+			serverpass = arg.data.Passwd;
+		}
+		if ("Input" in arg.data) {
+			setinput(arg.data.Input);
+		}
+	});
+
+	function tokentypeselected(kind) {
+		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+
+		var d = '{"jsonrpc":"1.0","method":"getasset","params":["*",true],"id":' + id.toString() + '}';
+		id++;
+		$.ajax({
+			url:'http://127.0.0.1:8832',
+			type: "POST",	// different version of jquery has different name for this field
+			data:d,
+			global: true,
+			beforeSend: function(xhr) { 
+				xhr.setRequestHeader("Authorization", "Basic " + auth);
+			},
+			dataType:"json",
+			success: function (resp) {
+				if (resp.error) return;
+
+				var cnt = 0;
+				var s = "";
+				for (var j = 0; j < resp.result.length; j++) {
+					if (cnt > 100 || resp.result[j].TokenType != kind) continue;
+					cnt++;
+
+					s += "<input name=coins type=checkbox value='" + resp.result[j].Outpoint + "'> ";
+					
+					if (resp.result[j].TokenType & 1) s += resp.result[j].VHash;
+					else if (resp.result[j].TokenType == 0) {
+						s += (resp.result[j].Value / 1.0e8) + " &omega;";
+					} else s += resp.result[j].Value.toString();
+
+					s += " (" + resp.result[j].Outpoint + ")<br>";
+				}
+				document.getElementById("mycoins").innerHTML = s;
+			},
+		});
+	}
+
+	</script>
+
+<script type="text/javascript">
+
+ninja.tab = {
+    select: function (walletTab) {
+        // detect type: normally an HtmlElement/object but when string then get the element
+        if (typeof walletTab === 'string') {
+            walletTab = document.getElementById(walletTab);
+        }
+        var walletType = walletTab.getAttribute("id");
+
+        if (walletTab.className.indexOf("selected") == -1) {
+            // unselect all tabs
+            for (var wType in ninja.wallets) {
+                document.getElementById(wType).className = "tab";
+                ninja.wallets[wType].close();
+            }
+
+            // don't open tab if entropy still being collected
+            // exceptions: brainwallet detailwallet
+            if (ninja.seeder.isStillSeeding == false || walletType == "brainwallet" || walletType == "detailwallet") {
+            	walletTab.className += " selected";
+            	document.getElementById("generate").style.display = "none";
+                ninja.wallets[walletTab.getAttribute("id")].open();
+            }
+            else if (ninja.seeder.isStillSeeding == true && !(walletType == "brainwallet" || walletType == "detailwallet")) {
+                document.getElementById("generate").style.display = "block";
+            }
+        }
+    },
+
+    whichIsOpen: function () {
+        return "singlewallet";
+
+        var isOpen;
+        for (var wType in ninja.wallets) {
+            isOpen = ninja.wallets[wType].isOpen();
+            if (isOpen) {
+                return wType;
+            }
+        }
+        return null;
+    }
+
+};
+
+ninja.getQueryString = function () {
+	var result = {}, queryString = location.search.substring(1), re = /([^&=]+)=([^&]*)/g, m;
+	while (m = re.exec(queryString)) {
+		result[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+	}
+	return result;
+};
+
+// change language
+ninja.translator.extractEnglishFromDomAndUpdateDictionary();
+
+if (ninja.getQueryString()["culture"] != undefined) {
+	ninja.translator.translate(ninja.getQueryString()["culture"]);
+} else {
+	ninja.translator.autoDetectTranslation();
+}
+
+	window.chrome.webview.postMessage("Ready");
+
+	</script>
+</body>
+</html>
