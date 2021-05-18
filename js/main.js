@@ -2,21 +2,14 @@ require.config({
       paths: {
           omgutil: 'omgutil',
           crypto: 'crypto',
-          omega: 'omega',
+		  rand: 'rand',
       }
  });
  
-var omegaDB, omgutil, omg, crypto;
-var version = "0.0";
+var omgutil, Crypto;
 
- require(['omega', 'omgutil', 'crypto'], function (omega, u, c) {
-	omg = omega;
+require(['crypto', 'omgutil'], function (c, u) {
 	omgutil = u;
-	crypto = c;
-
-	omegaDB.transaction(function (tx) {
-		tx.executeSql("select * from setting_table where item='version'", [], function (tx, res) {
-			if (res.rows.length > 0) version = res.rows[0].content;
-		}, function (err) {});
-	});
+	Crypto = c;
+	reqready = true;
 });

@@ -10,8 +10,11 @@
 
     <link href="../css/style.css" rel="stylesheet">
 	<script src="../js/jquery-1.10.2.min.js"></script>
-	<script src="../js/crypto.js"></script>
 	<script src="../js/status.js"></script>
+    <script src="../js/biginteger.js" type="text/javascript"></script>
+    <script src="../js/ecdsa.js" type="text/javascript"></script>
+
+    <script src="../js/require.min.js" type="text/javascript" data-main="../js/main"></script>
 </head>
 <body>
 	<div id="main">
@@ -58,15 +61,16 @@
 
 	<script type="text/javascript">
 		var iv;
+		var reqready = false;
 
 		function readyness() {
 			var d = '{"jsonrpc":"1.0","method":"getblockchaininfo","params":[],"id":' + id.toString() + '}';
 			id++;
 
-			var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+			var auth = Crypto.prototype.util.bytesToBase64(tobytes("admin:" + serverpass));
 
 			$.ajax({
-				url:'http://127.0.0.1:8832',
+				url:'http://127.0.0.1:8789',
 				type: "POST",	// different version of jquery has different name for this field
 				data:d,
 				global: true,

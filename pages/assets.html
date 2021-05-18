@@ -9,13 +9,14 @@
 	<meta name="Access-Control-Allow-Origin" content="*">
 
 	<script src="../js/jquery-1.10.2.min.js"></script>
-	<script src="../js/crypto.js"></script>
-	<script src="../js/status.js"></script>
 	<script src="../js/ninja.js"></script>
 
     <script src="../js/biginteger.js" type="text/javascript"></script>
     <script src="../js/ecdsa.js" type="text/javascript"></script>
-    <script src="../js/omgutil.js" type="text/javascript"></script>
+
+	<script src="../js/status.js"></script>
+
+    <script src="../js/require.min.js" type="text/javascript" data-main="../js/main"></script>
 
 	<link href="../css/style.css" rel="stylesheet">
 
@@ -39,12 +40,20 @@
 	</div>
 
 	<script type="text/javascript">
+	var auth, paswd;
+	var reqready = false;
+
     window.chrome.webview.addEventListener('message', arg => {
 		if ("Passwd" in arg.data) {
 			serverpass = arg.data.Passwd;
 		}
 		if ("Type" in arg.data) {
-			assets(arg.data.Type, -1);
+			function assetdefer() {
+				assets(arg.data.Type, -1);
+			}
+			if (!reqready) {
+				setTimeout(assetdefer, 1000);
+			} else assets(arg.data.Type, -1);
 		}
 		if ("Password" in arg.data) {
 			paswd = arg.data.Password;
@@ -53,7 +62,6 @@
 	});
 
 	var next = 0;
-	var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
 
 	function createrawtransaction (txin, txout) {
 		var d = [txin, [], txout, 0];
@@ -61,6 +69,8 @@
 		var param = {jsonrpc:"1.0", method:op, params:d, id:id};
 		var s = JSON.stringify(param);
 		id++;
+
+		var auth = Crypto.prototype.util.bytesToBase64(tobytes("admin:" + serverpass));
 
 		$.ajax({
 			url:'http://127.0.0.1:8789',
@@ -78,6 +88,17 @@
 	}
 
   function merge() {
+		if (!reqready) {
+			setTimeout(merge, 1000);
+			return;
+		}
+		if (!paswd) {
+			window.chrome.webview.postMessage("LockPrompt");
+			return;
+		}
+
+		var auth = Crypto.prototype.util.bytesToBase64(tobytes("admin:" + serverpass));
+
 		var accounts = ["default", "imported"];		// "default", 
 		var k = 1;
 		
@@ -88,8 +109,6 @@
 		var txout = [];
 		var k = 0;
 		var v = 0n;
-
-		auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
 
 		var sending = function () {
 			var to = {tokentype:0, value: {val: (parseFloat(v) / 1.0E8 + 0.0)}};
@@ -121,12 +140,12 @@
 			}).done(function (resp) {
 				if (resp.error) {
 					window.chrome.webview.postMessage("LockPrompt");
-//					window.chrome.webview.postMessage("ResetPassword");
 					return;
 				}
 
 				var d = {jsonrpc:"1.0",method:"signrawtransaction",params:[hextx, [], [], false],id:id};
 				id++;
+
 				$.ajax({
 					url:'http://127.0.0.1:8832',
 					type: "POST",	// different version of jquery has different name for this field
@@ -147,6 +166,7 @@
 
 					var d = {jsonrpc:"1.0",method:"sendrawtransaction",params:[hextx, true, 5],id:id};
 					id++;
+
 					$.ajax({
 						url:'http://127.0.0.1:8789',
 						type: "POST",	// different version of jquery has different name for this field
@@ -180,6 +200,7 @@
 				type: "POST",	// different version of jquery has different name for this field
 				data:d,
 				global: true,
+				async: false,
 				beforeSend: function(xhr) { 
 					xhr.setRequestHeader("Authorization", "Basic " + auth);
 				},
@@ -189,37 +210,42 @@
 				for (var j = 0; j < resp.result.length; j++) {
 					output = resp.result[j];
 					var d = omgutil.prototype.Base58.decode(resp.result[j]);
-					d = Crypto.util.bytesToHex(d.alice(0, 21)) + "41000000";
+					d = Crypto.prototype.util.bytesToHex(d.slice(0, 21)) + "41000000";
 					allowed.push(d);
 				}
 			});
 		}
 
-		var d = '{"jsonrpc":"1.0","method":"getasset","params":["*",' + kind + '],"id":' + id.toString() + '}';
+		var d = {jsonrpc:"1.0",method:"getasset",params:["*",true],id:id};
 		id++;
 
 		$.ajax({
 			url:'http://127.0.0.1:8832',
 			type: "POST",	// different version of jquery has different name for this field
-			data:d,
+			data:JSON.stringify(d),
 			global: true,
 			beforeSend: function(xhr) { 
 				xhr.setRequestHeader("Authorization", "Basic " + auth);
 			},
 			dataType:"json",
 			success: function (resp) {
-				if (resp.error) return;
+				if (resp.error) {
+					return;
+				}
 				
 				for (var j = 0; j < resp.result.length; j++) {
-					if (resp.result[j].TokenType != 0n) continue;
-					
+					if (resp.result[j].TokenType) continue;
+					if (!resp.result[j].Value) continue;
+
+
 					if ((txin.length % 260) == 0) v -= 100000n;
 
 					var op = resp.result[j].Outpoint.split(":");
 					
-					txin.push({txid: op[1], vout: patseInt(op[1])});
+					txin.push({txid: op[0], vout: parseInt(op[1])});
 					k++;
-					v += resp.result[j].Value;
+
+					v += BigInt(resp.result[j].Value);
 
 					if (k < 60) continue;
 					if (!sending()) return;
@@ -233,7 +259,15 @@
 	function assets(kind, stype) {
 		document.getElementById("listofkeys").innerHTML = "Please wait ... ";
 
-		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+		if (!reqready) {
+			function assetdefer() {
+				assets(kind, stype);
+			}
+			setTimeout(assetdefer, 1000);
+			return;
+		}
+		
+		var auth = Crypto.prototype.util.bytesToBase64(tobytes("admin:" + serverpass));
 
 		var d = '{"jsonrpc":"1.0","method":"getasset","params":["*",' + kind + '],"id":' + id.toString() + '}';
 		id++;
@@ -259,12 +293,14 @@
 						n0 = j;
 						continue;
 					}
+/*
 					if (j > 100 + n0) continue;
 					if (j == 100 + n0) {
 						next += 100;
-//						s += "<tr><td colspan=3><a href=# onclick='assets(kind);'>more</a></td></tr>";
+						s += "<tr><td colspan=3><a href=# onclick='assets(kind);'>more</a></td></tr>";
 						continue;
 					}
+*/
 					s += "<tr><th>" + (j + 1).toString() + "</th><th>";
 
 					if (stype < 0) {
@@ -292,8 +328,17 @@
 	}
 
 	function detail(utxo) {
+		if (!reqready) {
+			function assetdefer() {
+				detail(utxo);
+			}
+			setTimeout(assetdefer, 1000);
+			return;
+		}
+		
+		var auth = Crypto.prototype.util.bytesToBase64(tobytes("admin:" + serverpass));
+
 		var utx = utxo.split(':');
-		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
 
 		var d = '{"jsonrpc":"1.0","method":"gettxout","params":["' + utx[0] + '",' + utx[1].toString() + ',false],"id":' + id.toString() + '}';
 		id++;

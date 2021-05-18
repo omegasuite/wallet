@@ -10,15 +10,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 //https://raw.github.com/bitcoinjs/bitcoinjs-lib/c952aaeb3ee472e3776655b8ea07299ebed702c7/src/base58.js
-define(function (require) {
-	var Crypto = require("$UI/wupo/omgjs/crypto");
-	var rand = require("$UI/wupo/omgjs/rand");
-	
-	var Model = function(){
-		this.callParent();
-	}
 
-	Model.prototype.module = "omgutil";
+define(["crypto", "rand"], function (Crypto, rand) {
+	var Model = function(){
+		this.prototype.module = 'omgutil';
+	}
 
 	var BigInteger = window.BigInteger;
 	var EllipticCurve = window.EllipticCurve;

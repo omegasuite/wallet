@@ -1,0 +1,290 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 中文(简体) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_NEUTRAL
+#pragma code_page(936)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_WEBVIEW2APISAMPLE   ICON                    "logo.ico"
+
+IDI_SMALL               ICON                    "small.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDC_WEBVIEW2APISAMPLE MENU
+BEGIN
+    POPUP "地址"
+    BEGIN
+        MENUITEM "新建",                          IDM_NEW_KEY
+        MENUITEM "导入",                          IDM_IMPORT_KEY
+        MENUITEM "导出",                          IDM_EXPORT_KEY
+        MENUITEM "列表",                          IDM_KEY_LIST
+        POPUP "挖矿地址"
+        BEGIN
+            MENUITEM "选择用于挖矿的地址",                   ID_32807
+        END
+        MENUITEM "退出",                          IDM_EXIT
+    END
+    POPUP "挖矿"
+    BEGIN
+        MENUITEM "启动/运行中",                      IDM_START_MINING
+        MENUITEM "停止",                          IDM_STOP_MINING, CHECKED
+    END
+    POPUP "资产"
+    BEGIN
+        MENUITEM "总额",                          IDM_TOTAL_ASSET
+        MENUITEM "明细",                          IDM_ASSET_DETAIL
+    END
+    POPUP "交易"
+    BEGIN
+        MENUITEM "便捷支付",                        IDM_SEND
+        MENUITEM SEPARATOR
+        MENUITEM "输入",                          IDM_INPUT
+        MENUITEM "输出",                          IDM_OUTPUT
+        MENUITEM "土地",                          IDM_LAND
+        MENUITEM "导入",                          IDM_IMPORTRAWTX
+        MENUITEM "导出",                          IDM_EXPORTRAWTX
+        MENUITEM SEPARATOR
+        MENUITEM "签署",                          IDM_SIGNTX
+    END
+    POPUP "设置"
+    BEGIN
+        MENUITEM "钱包密码",                        IDM_PASSWORD
+        POPUP "锁定时间"
+        BEGIN
+            MENUITEM "1 分钟",                        IDM_1MIN
+            MENUITEM "5 分钟",                        IDM_5MIN
+            MENUITEM "10 分钟",                       IDM_10MIN
+            MENUITEM "30 分钟",                       IDM_30MIN
+            MENUITEM "无锁定",                         IDM_NOLOCK
+        END
+        POPUP "语言"
+        BEGIN
+            MENUITEM "中文",                          ID_32809
+            MENUITEM "English",                     ID_32810
+        END
+        POPUP "质押 ..."
+        BEGIN
+            MENUITEM "添加",                          ID_ADDCOLL
+            POPUP "删除"
+            BEGIN
+                MENUITEM SEPARATOR
+            END
+            MENUITEM SEPARATOR
+        END
+    END
+    MENUITEM "Ω链社区",                        ID_OMEGA
+    POPUP "帮助"
+    BEGIN
+        MENUITEM "调试",                          IDM_DEBUG
+        MENUITEM "关于 ...",                      IDM_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_WEBVIEW2APISAMPLE ACCELERATORS
+BEGIN
+    "?",            IDM_ABOUT,              ASCII,  ALT
+    "/",            IDM_ABOUT,              ASCII,  ALT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "关于Ω钱包"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDI_SMALL,IDC_STATIC,14,14,20,20
+    LTEXT           "Ω钱包, Version 0.1",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2020",IDC_STATIC,42,26,114,8
+    DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
+END
+
+IDD_DIALOG_INPUT DIALOGEX 0, 0, 189, 75
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "钱包密码"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "",IDC_STATIC_LABEL,7,7,175,61
+    EDITTEXT        IDC_EDIT_INPUT,21,21,150,14,ES_MULTILINE | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,27,49,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,111,48,50,14
+END
+
+IDD_DIALOG_INPUT2 DIALOGEX 0, 0, 194, 119
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "设置钱包密码"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "",IDC_STATIC_LABEL,7,7,180,105
+    EDITTEXT        IDC_EDIT_INPUT1,20,46,154,13,ES_MULTILINE | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,29,98,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,111,98,50,14
+    EDITTEXT        IDC_EDIT_WARN,14,19,166,22,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+    EDITTEXT        IDC_EDIT_INPUT2,20,70,154,13,ES_MULTILINE | ES_AUTOHSCROLL
+END
+
+IDD_DIALOG_NEWCOLL DIALOGEX 0, 0, 189, 90
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "质押UTXO（TxId:Index）"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "",IDC_STATIC_LABEL,7,7,175,76
+    EDITTEXT        IDC_NEWCOLL,21,21,150,14,ES_MULTILINE | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,27,69,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,109,69,50,14
+    EDITTEXT        IDC_COLLWARN,7,39,166,12,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+    EDITTEXT        IDC_COLLWARN2,7,52,174,12,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 163
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
+    END
+
+    IDD_DIALOG_INPUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 68
+    END
+
+    IDD_DIALOG_INPUT2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 187
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 112
+    END
+
+    IDD_DIALOG_NEWCOLL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "Ω钱包"
+    IDC_WEBVIEW2APISAMPLE   "WEBVIEW2APISAMPLE"
+END
+
+#endif    // 中文(简体) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// 英语(美国) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // 英语(美国) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

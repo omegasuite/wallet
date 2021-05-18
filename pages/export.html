@@ -8,10 +8,13 @@
 	<meta name="Access-Control-Allow-Headers" content="Content-Type, Accept, Authorization">
 
 	<script src="../js/jquery-1.10.2.min.js"></script>
-	<script src="../js/crypto.js"></script>
 	<script src="../js/status.js"></script>
 	<script src="../js/ninja.js"></script>
 	<script src="../js/qrcode.min.js"></script>
+    <script src="../js/biginteger.js" type="text/javascript"></script>
+    <script src="../js/ecdsa.js" type="text/javascript"></script>
+
+    <script src="../js/require.min.js" type="text/javascript" data-main="../js/main"></script>
     <link href="../css/style.css" rel="stylesheet">
 
 </head>
@@ -35,6 +38,7 @@
 
 	<script type="text/javascript">
 	var paswd;
+	var reqready = false;
 
     window.chrome.webview.addEventListener('message', arg => {
 		if ("Password" in arg.data) {
@@ -52,9 +56,9 @@
 		// 1. unlock using the pw
 		// 2. import priv key
 		var d = {jsonrpc:"1.0",method:"walletpassphrase",params:[paswd,20],id:id};
-		id++'
+		id++;
 
-		var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+		var auth = Crypto.prototype.util.bytesToBase64(tobytes("admin:" + serverpass));
 		$.ajax({
 			url:'http://127.0.0.1:8832',
 			type: "POST",	// different version of jquery has different name for this field

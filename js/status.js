@@ -13,7 +13,7 @@ function getstatus() {
 	var d = '{"jsonrpc":"1.0","method":"getblockchaininfo","params":[],"id":' + id.toString() + '}';
 	id++;
 
-	var auth = Crypto.util.bytesToBase64(tobytes("admin:" + serverpass));
+	var auth = Crypto.prototype.util.bytesToBase64(tobytes("admin:" + serverpass));
 
 	$.ajax({
 		url:'http://127.0.0.1:8789',
